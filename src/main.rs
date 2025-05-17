@@ -29,7 +29,6 @@ fn main() {
 
     let null_obj = JSONObject::Null;
 
-
     let mut map: HashMap<String, JSONObject> = HashMap::new();
     map.insert("name".to_string(), name_obj);
     map.insert("age".to_string(), age_obj);

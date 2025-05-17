@@ -1,17 +1,16 @@
 use std::collections::HashMap;
 use std::fmt::{self, Display, Formatter};
 
-use nom::Parser;
-use nom::{IResult, number::complete::recognize_float};
 use nom::{
+    IResult, Parser,
+    branch::alt,
     bytes::complete::{escaped, tag, take_while1},
-    character::complete::one_of,
+    character::complete::{multispace0, one_of},
+    number::complete::recognize_float,
     sequence::delimited,
 };
 
-use nom::branch::alt;
-
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq)]
 pub enum JSONObject {
     Null,
     Bool(bool),
@@ -75,11 +74,27 @@ fn parse_json_map(input: &str) -> IResult<&str, JSONObject> {
     todo!()
 }
 
+pub fn parse_json_value(input: &str) -> IResult<&str, JSONObject> {
+    delimited(
+        multispace0,
+        alt((
+            parse_json_null,
+            parse_json_bool,
+            parse_json_number,
+            parse_json_string,
+            parse_json_array,
+            parse_json_map,
+        )),
+        multispace0,
+    )
+    .parse(input)
+}
+
 impl Display for JSONObject {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         match self {
             JSONObject::Null => write!(f, "null"),
-            JSONObject::Bool(b) => write!(f, "{}", *b==true),
+            JSONObject::Bool(b) => write!(f, "{}", *b),
             JSONObject::Number(n) => write!(f, "{}", n),
             JSONObject::String(s) => write!(f, "\"{}\"", s),
             JSONObject::Array(arr) => {
@@ -96,7 +111,6 @@ impl Display for JSONObject {
         }
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -199,3 +213,47 @@ mod tests {
     }
 }
 
+#[test]
+fn test_parse_json_null() {
+    let result = parse_json_null("null");
+    assert!(result.is_ok(), "Expected Ok for 'null'");
+    let (remaining, value) = result.unwrap();
+    assert_eq!(remaining, "", "Expected no remaining input");
+    match value {
+        JSONObject::Null => {}
+        _ => panic!("Expected JSONObject::Null"),
+    }
+
+    let invalid_inputs = vec!["nul", "NULL", "nill", "none", "Null", "nan"];
+    for input in invalid_inputs {
+        assert!(
+            parse_json_null(input).is_err(),
+            "Expected error for '{}'",
+            input
+        );
+    }
+}
+
+#[test]
+fn test_parse_json_bool() {
+    let true_result = parse_json_bool("true");
+    assert!(true_result.is_ok(), "Expected Ok for 'true'");
+    let (remaining, value) = true_result.unwrap();
+    assert_eq!(remaining, "", "Expected no remaining input");
+    assert_eq!(value, JSONObject::Bool(true));
+
+    let false_result = parse_json_bool("false");
+    assert!(false_result.is_ok(), "Expected Ok for 'false'");
+    let (remaining, value) = false_result.unwrap();
+    assert_eq!(remaining, "", "Expected no remaining input");
+    assert_eq!(value, JSONObject::Bool(false));
+
+    let invalid_inputs = vec!["TRUE", "False", "truth", "fals"];
+    for input in invalid_inputs {
+        assert!(
+            parse_json_bool(input).is_err(),
+            "Expected error for '{}'",
+            input
+        );
+    }
+}
