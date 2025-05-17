@@ -6,7 +6,9 @@ mod json;
 // {
 //     name: "henry",
 //     age: 42,
-//     jobs: ["farmer, programmer"]
+//     jobs: ["farmer, programmer"],
+//     has_swag: true,
+//     friends: null
 // }
 
 fn main() {
@@ -22,10 +24,18 @@ fn main() {
     ];
     let jobs_obj = JSONObject::Array(jobs);
 
+    let boolean = true;
+    let boolean_obj = JSONObject::Bool(boolean);
+
+    let null_obj = JSONObject::Null;
+
+
     let mut map: HashMap<String, JSONObject> = HashMap::new();
     map.insert("name".to_string(), name_obj);
     map.insert("age".to_string(), age_obj);
     map.insert("jobs".to_string(), jobs_obj);
+    map.insert("has_swag".to_string(), boolean_obj);
+    map.insert("friends".to_string(), null_obj);
 
     let json_obj = JSONObject::Map(map);
 

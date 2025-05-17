@@ -3,20 +3,40 @@ use std::fmt::{self, Display, Formatter};
 
 use nom::Parser;
 use nom::{IResult, number::complete::recognize_float};
-
 use nom::{
     bytes::complete::{escaped, tag, take_while1},
-    character::complete::{none_of, one_of},
-    combinator::map,
+    character::complete::one_of,
     sequence::delimited,
 };
 
-#[derive(Debug)]
+use nom::branch::alt;
+
+#[derive(Debug, Clone)]
 pub enum JSONObject {
+    Null,
+    Bool(bool),
     Number(f64),
     String(String),
     Array(Vec<JSONObject>),
     Map(HashMap<String, JSONObject>),
+}
+
+pub fn parse_json_null(input: &str) -> IResult<&str, JSONObject> {
+    let mut parser = tag("null");
+    let result = parser.parse(input);
+    match result {
+        Ok((rest, _)) => Ok((rest, JSONObject::Null)),
+        Err(e) => Err(e),
+    }
+}
+
+pub fn parse_json_bool(input: &str) -> IResult<&str, JSONObject> {
+    let mut parser = alt((tag("true"), tag("false")));
+    let result = parser.parse(input);
+    match result {
+        Ok((rest, parsed)) => Ok((rest, JSONObject::Bool(parsed == "true"))),
+        Err(e) => Err(e),
+    }
 }
 
 pub fn parse_json_number(input: &str) -> IResult<&str, JSONObject> {
@@ -46,6 +66,37 @@ fn parse_json_string(input: &str) -> IResult<&str, JSONObject> {
         Err(e) => Err(e),
     }
 }
+
+fn parse_json_array(input: &str) -> IResult<&str, JSONObject> {
+    todo!()
+}
+
+fn parse_json_map(input: &str) -> IResult<&str, JSONObject> {
+    todo!()
+}
+
+impl Display for JSONObject {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        match self {
+            JSONObject::Null => write!(f, "null"),
+            JSONObject::Bool(b) => write!(f, "{}", *b==true),
+            JSONObject::Number(n) => write!(f, "{}", n),
+            JSONObject::String(s) => write!(f, "\"{}\"", s),
+            JSONObject::Array(arr) => {
+                let elements: Vec<String> = arr.iter().map(|v| v.to_string()).collect();
+                write!(f, "[{}]", elements.join(", "))
+            }
+            JSONObject::Map(map) => {
+                let pairs: Vec<String> = map
+                    .iter()
+                    .map(|(k, v)| format!("\"{}\": {}", k, v))
+                    .collect();
+                write!(f, "{{{}}}", pairs.join(", "))
+            }
+        }
+    }
+}
+
 
 #[cfg(test)]
 mod tests {
@@ -148,22 +199,3 @@ mod tests {
     }
 }
 
-impl Display for JSONObject {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        match self {
-            JSONObject::Number(n) => write!(f, "{}", n),
-            JSONObject::String(s) => write!(f, "\"{}\"", s),
-            JSONObject::Array(arr) => {
-                let elements: Vec<String> = arr.iter().map(|v| v.to_string()).collect();
-                write!(f, "[{}]", elements.join(", "))
-            }
-            JSONObject::Map(map) => {
-                let pairs: Vec<String> = map
-                    .iter()
-                    .map(|(k, v)| format!("\"{}\": {}", k, v))
-                    .collect();
-                write!(f, "{{{}}}", pairs.join(", "))
-            }
-        }
-    }
-}
