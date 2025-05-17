@@ -18,7 +18,7 @@ pub enum JSONObject {
     Number(f64),
     String(String),
     Array(Vec<JSONObject>),
-    Map(HashMap<String, JSONObject>),
+    Map(Vec<(String, JSONObject)>),
 }
 
 pub fn parse_json_null(input: &str) -> IResult<&str, JSONObject> {
@@ -104,10 +104,10 @@ fn parse_json_map(input: &str) -> IResult<&str, JSONObject> {
 
     match result {
         Ok((rest, parsed)) => {
-            let mut map = HashMap::new();
+            let mut vec = Vec::new();
             for (k, v) in parsed {
                 if let JSONObject::String(key) = k {
-                    map.insert(key, v);
+                    vec.push((key, v));
                 } else {
                     return Err(nom::Err::Error(nom::error::Error::new(
                         input,
@@ -115,7 +115,7 @@ fn parse_json_map(input: &str) -> IResult<&str, JSONObject> {
                     )));
                 }
             }
-            Ok((rest, JSONObject::Map(map)))
+            Ok((rest, JSONObject::Map(vec)))
         }
         Err(e) => Err(e),
     }
@@ -148,8 +148,8 @@ impl Display for JSONObject {
                 let elements: Vec<String> = arr.iter().map(|v| v.to_string()).collect();
                 write!(f, "[{}]", elements.join(", "))
             }
-            JSONObject::Map(map) => {
-                let pairs: Vec<String> = map
+            JSONObject::Map(vec) => {
+                let pairs: Vec<String> = vec
                     .iter()
                     .map(|(k, v)| format!("\"{}\": {}", k, v))
                     .collect();
@@ -347,9 +347,9 @@ mod tests {
             (
                 r#"{"a": 1, "b": false}"#,
                 JSONObject::Map({
-                    let mut m = HashMap::new();
-                    m.insert("a".to_string(), JSONObject::Number(1.0));
-                    m.insert("b".to_string(), JSONObject::Bool(false));
+                    let mut m = Vec::new();
+                    m.push(("a".to_string(), JSONObject::Number(1.0)));
+                    m.push(("b".to_string(), JSONObject::Bool(false)));
                     m
                 }),
             ),
