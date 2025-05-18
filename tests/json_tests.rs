@@ -144,16 +144,14 @@ fn test_parse_json_bool() {
 
 #[test]
 fn test_parse_json_array() {
-    let cases = vec![
-        (
-            "[1, 2, 3]",
-            JSONObject::Array(vec![
-                JSONObject::Number(1.0),
-                JSONObject::Number(2.0),
-                JSONObject::Number(3.0),
-            ]),
-        ),
-    ];
+    let cases = vec![(
+        "[1, 2, 3]",
+        JSONObject::Array(vec![
+            JSONObject::Number(1.0),
+            JSONObject::Number(2.0),
+            JSONObject::Number(3.0),
+        ]),
+    )];
     for (input, expected) in cases {
         let result = parse_json_array(input);
         assert!(

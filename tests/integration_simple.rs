@@ -1,5 +1,5 @@
-use std::fs;
 use json_rs::json::parse_json_value;
+use std::fs;
 
 #[test]
 fn test_parse_simple_json_file() {

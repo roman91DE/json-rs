@@ -3,12 +3,12 @@ use std::fmt::{self, Display, Formatter};
 use nom::{
     IResult, Parser,
     branch::alt,
-    bytes::complete::{tag, is_not, take_while_m_n},
+    bytes::complete::{is_not, tag, take_while_m_n},
     character::complete::{char, multispace0},
     combinator::{map, recognize},
-    multi::{separated_list0, many0},
+    multi::{many0, separated_list0},
     number::complete::recognize_float,
-    sequence::{delimited, separated_pair, preceded},
+    sequence::{delimited, preceded, separated_pair},
 };
 
 #[derive(Debug, Clone, PartialEq)]
